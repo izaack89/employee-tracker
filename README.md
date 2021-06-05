@@ -35,6 +35,8 @@ And execute the queries of employeeDB.sql this will create the schema and if you
 
 ## [Employee Tracker GitHub Code](https://github.com/izaack89/employee-tracker)
 
+## [Employee Tracker Vide](https://github.com/izaack89/employee-tracker)
+
 ## Employee Tracker References
 
 - [Inquirer](https://www.digitalocean.com/community/tutorials/nodejs-interactive-command-line-prompts) - Inquirer Information
