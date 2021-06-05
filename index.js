@@ -258,15 +258,6 @@ const addUserInfo = () => {
         });    
 }
 
-// const addRole = (answer,departmentName) => {
-//     console.log("Enter",departmentName)
-//     connection.query(`SELECT id FROM department where ?  order by id`, [{
-//         name : departmentName,
-//     }], (err, results) => {
-//         if (err) throw err;
-//         const idDepartment = results[0].id;
-//     });
-//  }
 const addRole = () => {
     const choiceArray = [];
     const deptId = [];
@@ -414,7 +405,6 @@ const displayUpdateUserRole = (userName) => {
             message: 'Which role do you want to set for this selected employee?',
             },
         ]).then((answer) => {
-            console.log(answer)
             updateRole.updateUserRole(userFirstName, userLastName, answer.roleName);
             start();  
         });
@@ -500,7 +490,6 @@ const updateDepartment = (answerDepartment) => {
             message: 'New name of the Department ?',
             },
         ]).then(function (answer) {
-            console.log(answer, answerDepartment)
             connection.query(`UPDATE department SET ? WHERE ?`,
                 [
                     {
