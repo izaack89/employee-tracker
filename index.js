@@ -1,10 +1,14 @@
 // DEPENDENCIES
 // Series of npm packages that we will use to give our server useful functionality
 const connection = require('./lib/connection');
+const updateManager = require("./src/update/updateManager");
+const updateRole = require("./src/update/updateRole");
 const inquirer = require('inquirer');
 const logo = require('asciiart-logo');
 const cTable = require('console.table');
 const config = require('./package.json');
+
+
 console.log(logo({
         name: 'Employee Manager',
         lineChars: 10,
@@ -245,7 +249,79 @@ const updateUser = (userName) => {
             });
         });    
 }
-const updateUserList = () => {    
+
+const displayUpdateUserRole = (userName) => {
+
+    const fullName = (userName).split(' ')
+    const userLastName = fullName[1];
+    const userFirstName = fullName[0];
+    connection.query(
+        {
+            sql: `SELECT  title  FROM role where  id not in ( select role_id from employee where first_name=? and last_name=?  )  order by id`,
+            values: [userFirstName,userLastName]
+        }
+    , (err, results) => {
+        if (err) throw err;
+
+        console.log('\r\n');
+        // once you have the role list , prompt the roles
+        inquirer
+        .prompt([
+            {
+            name: 'roleName',
+            type: 'rawlist',
+            choices() {
+                const choiceArray = [];
+                results.forEach(({ title }) => {
+                choiceArray.push(title);
+                });
+                return choiceArray;
+            },
+            message: 'Which role do you want to set for this selected employee?',
+            },
+        ]).then((answer) => {
+            console.log(answer)
+            updateRole.updateUserRole(userFirstName, userLastName, answer.roleName);
+            start();  
+        });
+
+    });  
+}
+
+const displayUpdateUserManager = (userName) => {
+    const fullName = (userName).split(' ')
+    const userLastName = fullName[1];
+    const userFirstName = fullName[0];
+    connection.query(
+        {
+            sql: `SELECT  concat(e.first_name,' ',e.last_name) as name  FROM employee as e where  first_name!=? and last_name!=?  order by e.id`,
+            values: [userFirstName,userLastName]
+        }
+    , (err, results) => {
+        if (err) throw err;
+        // once you have the manager list , lets show it with inquirer
+        inquirer
+        .prompt([
+            {
+            name: 'managerName',
+            type: 'rawlist',
+            choices() {
+                const choiceArray = [];
+                results.forEach(({ name }) => {
+                choiceArray.push(name);
+                });
+                return choiceArray;
+            },
+            message: 'Which Employee do you want to set as manager for this selected employee?',
+            },
+        ]).then((answer) => {
+            updateManager.updateUserManager(userFirstName,userLastName,answer.managerName)
+            start();          
+        });
+
+    });  
+}
+const updateUserList = (option) => {    
 
     connection.query(`SELECT  concat(e.first_name,' ',e.last_name) as name  FROM employee as e  order by e.id`, (err, results) => {
         if (err) throw err;
@@ -265,7 +341,17 @@ const updateUserList = () => {
             message: 'Which Employee would you like to edit?',
             },
         ]).then((answer) => {
-            updateUser(answer.userName);           
+            switch (option) {
+                case 1:
+                    updateUser(answer.userName);
+                    break;
+                case 2:
+                    displayUpdateUserRole(answer.userName);
+                    break;
+                case 3:
+                    displayUpdateUserManager(answer.userName);
+                    break;
+            }            
         });
 
     });
@@ -461,13 +547,13 @@ const start = () => {
                     deleteUser();
                     break;
                 case 'Update Employee':
-                    updateUserList();
+                    updateUserList(1);
                     break;
                 case 'Update Employee Role':
-                    connection.end();
+                    updateUserList(2);
                     break;
                 case 'Update Employee Manager':
-                    connection.end();
+                    updateUserList(3);
                     break;
                 case 'View All Roles':
                     viewAllRoles();
