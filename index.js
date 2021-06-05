@@ -1,8 +1,13 @@
 // DEPENDENCIES
-// Series of npm packages that we will use to give our server useful functionality
+// CUSTOM LIBRARIES
+// Database Connection
 const connection = require('./lib/connection');
+// Update Manager
 const updateManager = require("./src/update/updateManager");
+// Update Role 
 const updateRole = require("./src/update/updateRole");
+
+// Series of npm packages that we will use to give our server useful functionality
 const inquirer = require('inquirer');
 const logo = require('asciiart-logo');
 const cTable = require('console.table');
@@ -135,6 +140,124 @@ const viewAllDeparments = () => {
 }
 //------------------------- End Secion of View -------------------------
 //------------------------- Start Secion of Add -----------------------
+
+
+const addUserManager = (first_name, last_name,role_id) => {
+    
+    connection.query(
+        {
+            sql: `SELECT  id,concat(e.first_name,' ',e.last_name) as name  FROM employee as e where  first_name!=? and last_name!=?  order by e.id`,
+            values: [first_name,last_name]
+        }
+    , (err, results) => {
+        if (err) throw err;
+        const managerId = [];
+        managerId.push(null);
+        const choiceArray = [];
+        choiceArray.push("None");
+        console.log('\r\n');
+        // once you have the role list , prompt the roles
+        inquirer
+        .prompt([
+            {
+            name: 'managerName',
+            type: 'rawlist',
+            choices() {
+                results.forEach(({id, name }) => {
+                    choiceArray.push(name);
+                    managerId.push(id);
+                });
+                return choiceArray;
+            },
+            message: 'Which role do you want to set for this selected employee?',
+            },
+        ]).then((answer) => {
+            let keyIndex = 0;
+            let manager_id;
+            for (keyIndex; keyIndex < choiceArray.length; keyIndex++) {
+                if (choiceArray[keyIndex] === answer.managerName) {
+                    break;
+                }
+            }
+                manager_id = managerId[keyIndex];                
+            connection.query(`INSERT INTO employee SET ? `,
+                [
+                    {
+                        first_name: first_name,
+                        last_name: last_name,
+                        role_id: role_id,
+                        manager_id: manager_id
+                    }
+                ], (err, results) => {
+                if (err) throw err;
+                console.log('\r\n');
+                start();
+            });
+            
+        });
+
+    });    
+}
+
+const addUserRole = (first_name, last_name) => {
+    
+    connection.query(
+        {
+            sql: `SELECT  id,title  FROM role  order by id`,
+        }
+    , (err, results) => {
+        if (err) throw err;
+        const roleId = [];
+        const choiceArray = [];
+        console.log('\r\n');
+        // once you have the role list , prompt the roles
+        inquirer
+        .prompt([
+            {
+            name: 'roleName',
+            type: 'rawlist',
+            choices() {
+                results.forEach(({id, title }) => {
+                    choiceArray.push(title);
+                    roleId.push(id);
+                });
+                return choiceArray;
+            },
+            message: 'Which role do you want to set for this selected employee?',
+            },
+        ]).then((answer) => {
+            let keyIndex = 0;
+            for (keyIndex; keyIndex < choiceArray.length; keyIndex++) {
+                if (choiceArray[keyIndex]===answer.roleName) {
+                    break;
+                }
+            }
+            const role_id = roleId[keyIndex];
+            addUserManager(first_name, last_name, role_id);
+        });
+
+    });    
+}
+
+const addUserInfo = () => {
+    
+    inquirer
+        .prompt([
+            {
+            name: 'firstName',
+            message: 'What is the employee\'s first name?',
+            },
+            {
+            name: 'lastName',
+            message: 'What is the employee\'s last name?',
+            },
+        ]).then(function (answer) {
+            const first_name = answer.firstName;
+            const last_name = answer.lastName;
+            addUserRole(first_name, last_name);
+        });    
+}
+
 const addRole = (answer,departmentName) => {
     console.log("Enter",departmentName)
     connection.query(`SELECT id FROM department where ?  order by id`, [{
@@ -541,7 +664,7 @@ const start = () => {
                     viewAllEmployeesManager();
                     break;
                 case 'Add Employee':
-                    connection.end();
+                    addUserInfo();
                     break;
                 case 'Remove Employee':
                     deleteUser();

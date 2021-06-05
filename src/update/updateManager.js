@@ -1,5 +1,4 @@
 const connection = require('../../lib/connection');
-const inquirer = require('inquirer');
 
 const updateUserManager = (userFirstName,userLastName,managerName) => {
  
