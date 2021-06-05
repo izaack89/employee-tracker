@@ -258,29 +258,19 @@ const addUserInfo = () => {
         });    
 }
 
-const addRole = (answer,departmentName) => {
-    console.log("Enter",departmentName)
-    connection.query(`SELECT id FROM department where ?  order by id`, [{
-        name : departmentName,
-    }], (err, results) => {
-        if (err) throw err;
-        const idDepartment = results[0].id;
-        connection.query(`INSERT INTO role SET ? `,
-            [
-                {
-                    title: answer.title,
-                    salary : answer.salary,
-                    department_id : idDepartment,
-                }
-            ], (err, results) => {
-            if (err) throw err;
-            console.log('\r\n');
-            start();
-        });
-    });
- }
-const addRoleQuestions = () => {
-    connection.query(`SELECT name FROM department  order by id`, (err, results) => {
+// const addRole = (answer,departmentName) => {
+//     console.log("Enter",departmentName)
+//     connection.query(`SELECT id FROM department where ?  order by id`, [{
+//         name : departmentName,
+//     }], (err, results) => {
+//         if (err) throw err;
+//         const idDepartment = results[0].id;
+//     });
+//  }
+const addRole = () => {
+    const choiceArray = [];
+    const deptId = [];
+    connection.query(`SELECT id,name FROM department  order by id`, (err, results) => {
                 if (err) throw err;
                 // once you have the items, prompt the user for which they'd like to bid on
                 inquirer
@@ -298,16 +288,37 @@ const addRoleQuestions = () => {
                         name: 'departmentName',
                         type: 'rawlist',
                         choices() {
-                            const choiceArray = [];
-                            results.forEach(({ name }) => {
-                            choiceArray.push(name);
+                            
+                            results.forEach(({ id,name }) => {
+                                choiceArray.push(name);
+                                deptId.push(id);
                             });
                             return choiceArray;
                     },
                     message: 'On which Department would be this role?',
                     },
-                ]).then((answer) => {
-                    addRole(answer,answer.departmentName);
+                    ]).then((answer) => {
+                    
+                    let keyIndex = 0;
+                    for (keyIndex; keyIndex < choiceArray.length; keyIndex++) {
+                        if (choiceArray[keyIndex]===answer.departmentName) {
+                            break;
+                        }
+                    }
+                        const department_id = deptId[keyIndex];
+                        
+                        connection.query(`INSERT INTO role SET ? `,
+                            [
+                                {
+                                    title: answer.title,
+                                    salary : answer.salary,
+                                    department_id : department_id,
+                                }
+                            ], (err, results) => {
+                            if (err) throw err;
+                            console.log('\r\n');
+                            start();
+                        });
                 });
             });
 }
@@ -682,7 +693,7 @@ const start = () => {
                     viewAllRoles();
                     break;
                 case 'Add Role':
-                    addRoleQuestions();
+                    addRole();
                     break;
                 case 'Remove Role':
                     deleteRole();
