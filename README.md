@@ -2,7 +2,7 @@
 
 ![GitHub license](https://img.shields.io/badge/Licenses-MIT-blue.svg)
 
-This system will help you to have a managment for the people that are working on a companie
+This system will help you to have a managment for the people that are working on a company
 
 ## Table of Contents
 
